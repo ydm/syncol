@@ -2,21 +2,21 @@ package syncol
 
 import "sync"
 
-type SynchronizedCollection struct {
-	c Collection
+type SynchronizedCollection[T any] struct {
+	c Collection[T]
 	mu sync.Mutex
 	signal *sync.Cond
 	unfinishedTasks int
 }
 
-func NewSynchronizedCollection(c Collection) *SynchronizedCollection {
+func NewSynchronizedCollection[T any](c Collection[T]) *SynchronizedCollection[T] {
 	c.Init()
-	s := SynchronizedCollection{c: c}
+	s := SynchronizedCollection[T]{c: c}
 	s.signal = sync.NewCond(&s.mu)
 	return &s
 }
 
-func (q *SynchronizedCollection) TaskDone() {
+func (q *SynchronizedCollection[T]) TaskDone() {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	q.unfinishedTasks -= 1
@@ -28,7 +28,7 @@ func (q *SynchronizedCollection) TaskDone() {
 	}
 }
 
-func (q *SynchronizedCollection) Join() {
+func (q *SynchronizedCollection[T]) Join() {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	for q.unfinishedTasks > 0 {
@@ -36,7 +36,7 @@ func (q *SynchronizedCollection) Join() {
 	}
 }
 
-func (q *SynchronizedCollection) Put(item interface{}) {
+func (q *SynchronizedCollection[T]) Put(item T) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	q.c.Put(item)
@@ -46,7 +46,7 @@ func (q *SynchronizedCollection) Put(item interface{}) {
 
 // Get returns when there is a new item Put() in the queue (with ok
 // set to true) or when there is nothing more to get (ok = false).
-func (q *SynchronizedCollection) Get() (item interface{}, ok bool) {
+func (q *SynchronizedCollection[T]) Get() (item T, ok bool) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	for q.unfinishedTasks > 0 {
@@ -58,5 +58,5 @@ func (q *SynchronizedCollection) Get() (item interface{}, ok bool) {
 		// task to be done.
 		q.signal.Wait()
 	}
-	return nil, false
+	return item, false
 }

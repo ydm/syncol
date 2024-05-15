@@ -1,7 +1,7 @@
 package syncol
 
-type Collection interface {
+type Collection[T any] interface {
 	Init()
-	Put(item interface{})
-	Get() (interface{}, bool)
+	Put(item T)
+	Get() (T, bool)
 }

@@ -2,31 +2,32 @@ package syncol
 
 import "container/list"
 
-type queue struct {
+type queue[T any] struct {
 	q *list.List
 }
 
-func newQueue() *queue {
-	return &queue{list.New()}
+func newQueue[T any]() *queue[T] {
+	return &queue[T]{list.New()}
 }
 
-func (q *queue) Init() {
+func (q *queue[T]) Init() {
 	q.q = list.New()
 }
 
-func (q *queue) Put(item interface{}) {
+func (q *queue[T]) Put(item T) {
 	q.q.PushBack(item)
 }
 
-func (q *queue) Get() (item interface{}, ok bool) {
+func (q *queue[T]) Get() (item T, ok bool) {
 	e := q.q.Front()
 	if e != nil {
-		item = q.q.Remove(e)
+		item = q.q.Remove(e).(T)
 		ok = true
 	}
 	return
 }
 
-func NewQueue() *SynchronizedCollection {
-	return NewSynchronizedCollection(newQueue())
+func NewQueue[T any]() *SynchronizedCollection[T] {
+	var col Collection[T] = newQueue[T]()
+	return NewSynchronizedCollection(col)
 }

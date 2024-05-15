@@ -2,58 +2,61 @@ package syncol
 
 import "container/heap"
 
-type items struct {
-	ary []interface{}
-	cmp Comparator
+type items[T any] struct {
+	ary []T
+	cmp Comparator[T]
 }
 
-func (xs items) Len() int { return len(xs.ary) }
+func (xs items[T]) Len() int { return len(xs.ary) }
 
-func (xs items) Less(i, j int) bool {
+func (xs items[T]) Less(i, j int) bool {
 	return xs.cmp(xs.ary[i], xs.ary[j])
 }
 
-func (xs items) Swap(i, j int) {
+func (xs items[T]) Swap(i, j int) {
 	xs.ary[i], xs.ary[j] = xs.ary[j], xs.ary[i]
 }
 
-func (xs *items) Push(x interface{}) {
-	xs.ary = append(xs.ary, x)
+func (xs *items[T]) Push(x any) {
+	xs.ary = append(xs.ary, x.(T))
 }
 
-func (xs *items) Pop() interface{} {
+func (xs *items[T]) Pop() any {
 	n := len(xs.ary)
 	if n <= 0 {
 		return nil
 	}
-	m := n-1
+	m := n - 1
 	ans := xs.ary[m]
-	xs.ary[m] = nil // Avoid memory leak.
+	// Avoid memory leaks. --+
+	var zero T       //      |
+	xs.ary[m] = zero //      |
+	// ----------------------+
 	xs.ary = xs.ary[:m]
 	return ans
 }
 
-type priorityQueue struct {
-	xs items
+type priorityQueue[T any] struct {
+	xs items[T]
 }
 
-func (q *priorityQueue) Init() {
+func (q *priorityQueue[T]) Init() {
 }
 
-func (q *priorityQueue) Put(item interface{}) {
+func (q *priorityQueue[T]) Put(item T) {
 	heap.Push(&q.xs, item)
 }
 
-func (q *priorityQueue) Get() (item interface{}, ok bool) {
+func (q *priorityQueue[T]) Get() (item T, ok bool) {
 	n := len(q.xs.ary)
 	if n <= 0 {
-		return nil, false
+		return item, false
 	}
-	return heap.Pop(&q.xs), true
+	return heap.Pop(&q.xs).(T), true
 }
 
-func NewPriorityQueue(cmp Comparator) *SynchronizedCollection {
-	xs := items{make([]interface{}, 0, 16), cmp}
-	pq := priorityQueue{xs}
-	return NewSynchronizedCollection(&pq)
+func NewPriorityQueue[T any](cmp Comparator[T]) *SynchronizedCollection[T] {
+	xs := items[T]{make([]T, 0, 16), cmp}
+	pq := priorityQueue[T]{xs}
+	return NewSynchronizedCollection[T](&pq)
 }

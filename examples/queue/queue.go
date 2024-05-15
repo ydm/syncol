@@ -15,14 +15,14 @@ import (
 // +------+
 
 type node struct {
-	Value int
+	value int
 	left  *node
 	right *node
 }
 
 func (n *node) Add(x int) {
 	sub := &n.left
-	if n.Value < x {
+	if n.value < x {
 		sub = &n.right
 	}
 	if *sub != nil {
@@ -41,7 +41,7 @@ func (n *node) String() string {
 	if n.right != nil {
 		right = n.right.String()
 	}
-	return fmt.Sprintf("{%d %v %v}", n.Value, left, right)
+	return fmt.Sprintf("{%d %v %v}", n.value, left, right)
 }
 
 // +-----------+
@@ -76,14 +76,14 @@ func (s *nodeStack) Pop() (n *node, ok bool) {
 	return
 }
 
+var invocations int64
+
 // +---------+
 // | bounded |
 // +---------+
 
-var invocations int64
-
 func bounded(root *node) {
-	queue := syncol.NewQueue()
+	queue := syncol.NewQueue[*node]()
 	queue.Put(root)
 
 	numWorkers := 4
@@ -93,7 +93,7 @@ func bounded(root *node) {
 	queue.Join()
 }
 
-func boundedWorker(queue *syncol.SynchronizedCollection) {
+func boundedWorker(queue *syncol.SynchronizedCollection[*node]) {
 	id := atomic.AddInt64(&invocations, 1)
 	for {
 		time.Sleep(100 * time.Millisecond)
@@ -101,9 +101,9 @@ func boundedWorker(queue *syncol.SynchronizedCollection) {
 		if !ok {
 			break
 		}
-		// Do something with item
+		// Do something with this item.
 		n := item.(*node)
-		fmt.Printf("[%d] %d\n", id, n.Value)
+		fmt.Printf("[%d] %d\n", id, n.value)
 		// Enqueue more items.
 		if n.left != nil {
 			queue.Put(n.left)
@@ -130,7 +130,7 @@ func unboundedWorker(n *node, wg *sync.WaitGroup) {
 	defer wg.Done()
 	id := atomic.AddInt64(&invocations, 1)
 	for {
-		fmt.Printf("[%d] %d\n", id, n.Value)
+		fmt.Printf("[%d] %d\n", id, n.value)
 		if n.right != nil {
 			if n.left != nil {
 				wg.Add(1)
@@ -163,7 +163,4 @@ func main() {
 	invocations = 0
 	bounded(root)
 	fmt.Printf("invocations=%d\n\n", invocations)
-
-	time.Sleep(1 * time.Second)
-	fmt.Println("PUT A BREAKPOINT HERE")
 }
