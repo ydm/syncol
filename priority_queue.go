@@ -18,7 +18,7 @@ func (xs items[T]) Swap(i, j int) {
 }
 
 func (xs *items[T]) Push(x any) {
-	xs.ary = append(xs.ary, x.(T))
+	xs.ary = append(xs.ary, x.(T)) //nolint:forcetypeassert
 }
 
 func (xs *items[T]) Pop() any {
@@ -26,13 +26,15 @@ func (xs *items[T]) Pop() any {
 	if n <= 0 {
 		return nil
 	}
-	m := n - 1
-	ans := xs.ary[m]
+
+	last := n - 1
+	ans := xs.ary[last]
 	// Avoid memory leaks. --+
-	var zero T       //      |
-	xs.ary[m] = zero //      |
+	var zero T          //   |
+	xs.ary[last] = zero //   |
 	// ----------------------+
-	xs.ary = xs.ary[:m]
+	xs.ary = xs.ary[:last]
+
 	return ans
 }
 
@@ -52,11 +54,13 @@ func (q *priorityQueue[T]) Get() (item T, ok bool) {
 	if n <= 0 {
 		return item, false
 	}
-	return heap.Pop(&q.xs).(T), true
+
+	return heap.Pop(&q.xs).(T), true //nolint:forcetypeassert
 }
 
 func NewPriorityQueue[T any](cmp Comparator[T]) *SynchronizedCollection[T] {
 	xs := items[T]{make([]T, 0, 16), cmp}
 	pq := priorityQueue[T]{xs}
+
 	return NewSynchronizedCollection[T](&pq)
 }

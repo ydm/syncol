@@ -21,13 +21,15 @@ func (q *queue[T]) Put(item T) {
 func (q *queue[T]) Get() (item T, ok bool) {
 	e := q.q.Front()
 	if e != nil {
-		item = q.q.Remove(e).(T)
+		item = q.q.Remove(e).(T) //nolint:forcetypeassert
 		ok = true
 	}
+
 	return
 }
 
 func NewQueue[T any]() *SynchronizedCollection[T] {
 	var col Collection[T] = newQueue[T]()
+
 	return NewSynchronizedCollection(col)
 }

@@ -1,3 +1,16 @@
 linters:
   enable-all: true
-
+  disable:
+    - deadcode
+    - exhaustivestruct
+    - golint
+    - ifshort
+    - interfacer
+    - maligned
+    - nosnakecase
+    - scopelint
+    - structcheck
+    - varcheck
+    - copyloopvar               # enable when 1.22
+    - intrange                  # enable when 1.22
+    - gomnd                     # most stupid linter ever written
